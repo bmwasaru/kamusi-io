@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kamusi ya Kiswahili</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1d4ed8">
+    <link rel="apple-touch-icon" href="assets/icon-512.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="icon" type="image/png" href="assets/icon-512.png">
+    <link rel="shortcut icon" href="assets/icon-512.png">
+    <link rel="apple-touch-icon" href="assets/icon-512.png">
+</head>
+<body class="bg-gray-100 min-h-screen">
+
+    <header class="bg-blue-700 text-white p-6 shadow-lg">
+        <div class="max-w-4xl mx-auto text-center">
+            <h1 class="text-3xl font-bold">Kamusi</h1>
+            <p class="mt-2 opacity-80">Tafuta maneno ya Kiswahili kwa urahisi</p>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto p-4">
+        <div id="wordOfDayContainer"></div>
+        <div class="relative mt-4">
+            <input type="text" id="searchInput" placeholder="Andika neno hapa..." 
+                   class="w-full p-4 rounded-lg border shadow focus:ring-2 focus:ring-blue-500 outline-none">
+        </div>
+
+        <div id="results" class="mt-8 space-y-4">
+            <p class="text-center text-gray-500">Pakia data kuanza...</p>
+        </div>
+    </main>
+
+    <footer class="mt-12 pb-8 text-center text-gray-500 text-sm">
+        <p>Maneno kwa hisani ya Jordan Kalebu 
+            <a href="https://github.com/Kalebu/kamusi" target="_blank" class="text-blue-600 hover:underline">
+                Kalebu/kamusi
+            </a>
+        </p>
+        <p class="mb-2 italic">
+        Kazi hii imetolewa katika 
+        <a href="https://creativecommons.org/publicdomain/zero/1.0/" target="_blank" class="text-blue-600 hover:underline">
+            Uwanja wa Umma (Public Domain - CC0)
+        </a>.
+    </p>
+</footer>
+
+    <script>
+        let dictionaryData = [];
+
+        // Load JSON data
+        fetch('./data/words.json')
+            .then(response => response.json())
+            .then(data => {
+                dictionaryData = data;
+                displayWordOfTheDay(data);
+                document.getElementById('results').innerHTML = '<p class="text-center text-gray-500">Tayari! Tafuta neno lolote.</p>';
+            });
+
+        // Search Logic
+        const searchInput = document.getElementById('searchInput');
+        const resultsDiv = document.getElementById('results');
+
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            if (query.length < 2) {
+                resultsDiv.innerHTML = "";
+                return;
+            }
+
+            const matches = dictionaryData.filter(item => 
+                item.word.toLowerCase().startsWith(query)
+            ).slice(0, 20); // Show top 20 matches
+
+            displayResults(matches);
+        });
+
+        // 3. Display Logic
+        function displayResults(matches) {
+            const resultsDiv = document.getElementById('results');
+            
+            if (matches.length === 0) {
+                resultsDiv.innerHTML = '<p class="text-center text-gray-500">Neno halikupatikana.</p>';
+                return;
+            }
+
+            resultsDiv.innerHTML = matches.map(item => {
+                // 1. Split multiple meanings (separated by | in our JSON)
+                const meaningsArray = item.meaning.split(' | ').filter(m => m.trim() !== '');
+                
+                // 2. Split multiple sentences if they exist
+                const sentencesArray = item.sentence.split(' | ').filter(s => s.trim() !== '');
+
+                return `
+                    <div class="bg-white p-6 rounded-lg shadow-md border-l-4 border-blue-600 mb-6">
+                        <div class="flex justify-between items-start mb-3">
+                            <h2 class="text-2xl font-bold text-gray-900">${item.word}</h2>
+                            ${item.conjugation ? `<span class="text-xs font-mono bg-gray-100 px-2 py-1 rounded text-gray-500">${item.conjugation}</span>` : ''}
+                        </div>
+                        
+                        <ul class="space-y-2 mb-4">
+                            ${meaningsArray.map((m, index) => `
+                                <li class="text-gray-800 flex">
+                                    <span class="font-bold text-blue-600 mr-2">${index + 1}.</span>
+                                    <span>${m}</span>
+                                </li>
+                            `).join('')}
+                        </ul>
+
+                        ${sentencesArray.length > 0 ? `
+                            <div class="mt-4 p-4 bg-blue-50 rounded-lg border-l-2 border-blue-200">
+                                <p class="text-xs font-bold text-blue-400 uppercase tracking-wider mb-2">Mifano katika sentensi</p>
+                                <ul class="list-disc list-inside space-y-1">
+                                    ${sentencesArray.map(s => `
+                                        <li class="text-gray-700 italic leading-relaxed">"${s}"</li>
+                                    `).join('')}
+                                </ul>
+                            </div>
+                        ` : ''}
+
+                        ${item.synonyms ? `
+                            <div class="mt-4 pt-3 border-t border-gray-100">
+                                <p class="text-sm text-gray-500">
+                                    <span class="font-semibold text-gray-700">Visawe:</span> ${item.synonyms}
+                                </p>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function getWordOfTheDay(data) {
+            const now = new Date();
+            // Create a unique number for the day (YYYYMMDD)
+            const dateSeed = now.getFullYear() * 10000 + (now.getMonth() + 1) * 100 + now.getDate();
+            
+            // Use the seed to pick a consistent index
+            const index = dateSeed % data.length;
+            return data[index];
+        }
+
+        function displayWordOfTheDay(data) {
+            const wod = getWordOfTheDay(data);
+            const container = document.getElementById('wordOfDayContainer');
+            
+            // We use the same formatting as our search results
+            container.innerHTML = `
+                <div class="bg-gradient-to-r from-blue-600 to-blue-800 p-1 rounded-xl shadow-lg mb-8">
+                    <div class="bg-white p-6 rounded-lg">
+                        <div class="flex items-center mb-2">
+                            <span class="bg-blue-100 text-blue-800 text-xs font-bold px-2.5 py-0.5 rounded mr-2 uppercase">Neno la Leo</span>
+                            <span class="text-gray-400 text-xs">${new Date().toLocaleDateString('sw-KE')}</span>
+                        </div>
+                        <h2 class="text-3xl font-black text-gray-900 mb-2">${wod.word}</h2>
+                        <p class="text-gray-700 leading-relaxed mb-4">${wod.meaning.split('|')[0]}</p>
+                        ${wod.sentence ? `<p class="italic text-blue-600 text-sm">"${wod.sentence.split('|')[0]}"</p>` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                .then(registration => {
+                    console.log('Kamusi is ready for offline use!');
+                })
+                .catch(error => {
+                    console.error('Service Worker registration failed:', error);
+                });
+            });
+        }
+
+
+    </script>
+</body>
+</html>

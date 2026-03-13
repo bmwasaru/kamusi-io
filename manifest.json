@@ -1,0 +1,18 @@
+{
+  "short_name": "Kamusi",
+  "name": "Kamusi ya Kiswahili",
+  "icons": [
+    {
+      "src": "assets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "index.html",
+  "background_color": "#1d4ed8",
+  "display": "standalone",
+  "scope": "./",
+  "theme_color": "#1d4ed8",
+  "description": "Kamusi ya Kiswahili ya kisasa inayofanya kazi bila mtandao."
+}
