@@ -165,18 +165,20 @@
         }
 
         if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
-                .then(registration => {
-                    console.log('Kamusi is ready for offline use!');
-                })
-                .catch(error => {
-                    console.error('Service Worker registration failed:', error);
+            navigator.serviceWorker.register('./sw.js').then(reg => {
+                reg.addEventListener('updatefound', () => {
+                    const newWorker = reg.installing;
+                    newWorker.addEventListener('statechange', () => {
+                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            // This shows an alert if a new version is ready
+                            if (confirm("Toleo jipya linapatikana! Je, ungependa kupakia upya?")) {
+                                window.location.reload();
+                            }
+                        }
+                    });
                 });
             });
         }
-
-
     </script>
 </body>
 </html>
