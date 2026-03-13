@@ -179,6 +179,29 @@
                 });
             });
         }
+
+        let deferredPrompt;
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+        // Prevent Chrome from showing the tiny default bar
+        e.preventDefault();
+        // Stash the event so it can be triggered later.
+        deferredPrompt = e;
+        
+        // Show your own custom "Install Kamusi App" button
+        const installBtn = document.getElementById('installBtn');
+        installBtn.style.display = 'block';
+
+        installBtn.addEventListener('click', () => {
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.then((choiceResult) => {
+            if (choiceResult.outcome === 'accepted') {
+                console.log('User installed the Kamusi');
+            }
+            deferredPrompt = null;
+            });
+        });
+        });
     </script>
 </body>
 </html>
