@@ -49,6 +49,30 @@
     </p>
 </footer>
 
+<!-- Installation Banner -->
+<div id="pwaInstallBanner" class="hidden fixed bottom-0 left-0 right-0 max-w-xl mx-auto m-4 bg-white rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.2)] transform translate-y-full transition-transform duration-500 ease-out z-50 border border-gray-100 overflow-hidden">
+    <div class="p-5 flex items-center justify-between border-l-8 border-blue-600">
+        <div class="flex items-center space-x-4">
+            <!-- App Icon Wrapper -->
+            <div class="w-14 h-14 bg-blue-600 rounded-xl flex items-center justify-center shadow-md text-white font-bold text-2xl">
+                K
+            </div>
+            <div>
+                <h3 class="font-bold text-gray-900 text-base">Weka Kamusi Yangu</h3>
+                <p class="text-xs text-gray-500 mt-0.5">Tumia bila mtandao na kwa haraka zaidi!</p>
+            </div>
+        </div>
+        <div class="flex flex-col space-y-2">
+            <button id="pwaInstallBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-4 py-2.5 rounded-lg transition-colors shadow-sm tracking-wide">
+                WEKA
+            </button>
+            <button id="pwaCloseBtn" class="text-gray-400 hover:text-gray-600 text-xs font-medium py-1">
+                Baadaye
+            </button>
+        </div>
+    </div>
+</div>
+
     <script>
         let dictionaryData = [];
 
@@ -202,6 +226,78 @@
             });
         });
         });
+
+        let localDeferredPrompt;
+        const installBanner = document.getElementById('pwaInstallBanner');
+        const installBtn = document.getElementById('pwaInstallBtn');
+        const closeBtn = document.getElementById('pwaCloseBtn');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            // Prevent mobile browsers from showing the default bottom mini-infobar
+            e.preventDefault();
+            localDeferredPrompt = e;
+
+            // Check localStorage to ensure this is a first-time/non-dismissed visitor
+            if (!localStorage.getItem('kamusi_install_dismissed')) {
+                // Delays showing the banner for 3 seconds so they can see your layout first
+                setTimeout(() => {
+                    installBanner.classList.remove('hidden');
+                    // Small microtask delay to let 'hidden' clear before applying CSS animation
+                    setTimeout(() => {
+                        installBanner.classList.remove('translate-y-full');
+                    }, 50);
+                }, 3000);
+            }
+        });
+
+        installBtn.addEventListener('click', async () => {
+            if (localDeferredPrompt) {
+                // Trigger the native browser prompt layer
+                localDeferredPrompt.prompt();
+                const { outcome } = await localDeferredPrompt.userChoice;
+                
+                if (outcome === 'accepted') {
+                    dismissInstallBanner();
+                }
+                localDeferredPrompt = null;
+            } else {
+                // 2. Fallback Path: Identify user agent
+                const isAndroid = /Android/i.test(navigator.userAgent);
+                const isChrome = /Chrome/i.test(navigator.userAgent) || /CriOS/i.test(navigator.userAgent);
+
+                if (isAndroid || isChrome) {
+                    // Transform the banner into a visual step-by-step instruction guide
+                    const textContainer = installBanner.querySelector('p.text-gray-500');
+                    const titleContainer = installBanner.querySelector('h3.font-bold');
+                    
+                    titleContainer.textContent = "Sakinisha Kupitia Chrome";
+                    textContainer.innerHTML = `
+                        <span class="block mt-1 text-gray-700 font-medium">Bonyeza alama ya vidoti vitatu <strong class="text-blue-700 font-bold">⋮</strong> juu kulia, kisha uchague <strong class="text-blue-700 font-bold">"Add to Home screen"</strong> au <strong class="text-blue-700 font-bold">"Install app"</strong>.</span>
+                    `;
+                    
+                    // Change the button text to make it clear they need to look at the menu
+                    installBtn.textContent = "Nimeelewa";
+                    installBtn.onclick = () => dismissInstallBanner();
+                } else {
+                    // Fallback for iOS/Safari users
+                    alert("Kwenye iOS (iPhone): Bonyeza alama ya 'Share' (Mshale) kisha chagua 'Add to Home Screen'.");
+                    dismissInstallBanner();
+                }
+            }
+        });
+
+        closeBtn.addEventListener('click', () => {
+            dismissInstallBanner();
+            // Persist choice so returning users aren't pestered continuously
+            localStorage.setItem('kamusi_install_dismissed', 'true');
+        });
+
+        function dismissInstallBanner() {
+            installBanner.classList.add('translate-y-full');
+            setTimeout(() => {
+                installBanner.classList.add('hidden');
+            }, 500); // Wait for the transition slide animation to complete
+        }
     </script>
 </body>
 </html>
