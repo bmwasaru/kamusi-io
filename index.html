@@ -13,10 +13,42 @@
     <link rel="icon" type="image/png" href="assets/icon-512.png">
     <link rel="shortcut icon" href="assets/icon-512.png">
     <link rel="apple-touch-icon" href="assets/icon-512.png">
+    
+    <style>
+        :root {
+            --app-theme-color: #1d4ed8;
+        }
+
+        html {
+            background-color: var(--app-theme-color);
+        }
+
+        body {
+            margin: 0;
+        }
+
+        .app-header {
+            background-color: var(--app-theme-color);
+
+            padding-top: calc(
+            1.5rem + env(safe-area-inset-top, 0px)
+            );
+
+            padding-right: calc(
+            1.5rem + env(safe-area-inset-right, 0px)
+            );
+
+            padding-bottom: 1.5rem;
+
+            padding-left: calc(
+            1.5rem + env(safe-area-inset-left, 0px)
+            );
+        }
+    </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
 
-    <header class="bg-blue-700 text-white p-6 shadow-lg">
+    <header class="app-header text-white shadow-lg">
         <div class="max-w-4xl mx-auto text-center">
             <h1 class="text-3xl font-bold">Kamusi</h1>
             <p class="mt-2 opacity-80">Tafuta maneno ya Kiswahili kwa urahisi</p>
