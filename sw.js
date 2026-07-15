@@ -1,49 +1,50 @@
-const CACHE_NAME = 'kamusi-v2.2';
-const ASSETS_TO_CACHE = [
+const CACHE_NAME = 'kamusi-v2.3';
+
+const APP_ASSETS = [
   './',
   './index.html',
+  './manifest.json',
   './data/words.json',
-  'https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css'
+  './assets/icon-512.png'
 ];
 
-// Install the Service Worker and cache all dictionary assets
-self.addEventListener('install', (event) => {
+self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      console.log('Caching dictionary data...');
-      return cache.addAll(ASSETS_TO_CACHE);
-    })
+    caches.open(CACHE_NAME).then(cache => cache.addAll(APP_ASSETS))
   );
+
   self.skipWaiting();
 });
 
-// Activate and clean up old caches
-self.addEventListener('activate', (event) => {
+self.addEventListener('activate', event => {
   event.waitUntil(
-    caches.keys().then((keys) => {
-      return Promise.all(
-        keys.map((key) => {
-          if (key !== CACHE_NAME) {
-            console.log('Cleaning up old cache:', key);
-            return caches.delete(key);
-          }
-        })
-      );
-    })
+    Promise.all([
+      caches.keys().then(cacheNames =>
+        Promise.all(
+          cacheNames
+            .filter(name => name !== CACHE_NAME)
+            .map(name => caches.delete(name))
+        )
+      ),
+      self.clients.claim()
+    ])
   );
 });
 
-// Fetch logic: Serve from cache first, then try network
-self.addEventListener('fetch', (event) => {
+self.addEventListener('fetch', event => {
+  if (event.request.method !== 'GET') {
+    return;
+  }
 
+  // Network-first for page navigation.
   if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request)
         .then(response => {
-          const responseCopy = response.clone();
+          const copy = response.clone();
 
           caches.open(CACHE_NAME).then(cache => {
-            cache.put(event.request, responseCopy);
+            cache.put('./index.html', copy);
           });
 
           return response;
@@ -54,8 +55,9 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Cache-first for dictionary data and static files.
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
+    caches.match(event.request).then(cachedResponse => {
       return cachedResponse || fetch(event.request);
     })
   );
