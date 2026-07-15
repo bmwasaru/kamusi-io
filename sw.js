@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kamusi-v2.4';
+const CACHE_NAME = 'kamusi-v2.5';
 
 const APP_ASSETS = [
   './',
