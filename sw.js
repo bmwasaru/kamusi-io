@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kamusi-v2.1';
+const CACHE_NAME = 'kamusi-v2.2';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -35,6 +35,25 @@ self.addEventListener('activate', (event) => {
 
 // Fetch logic: Serve from cache first, then try network
 self.addEventListener('fetch', (event) => {
+
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .then(response => {
+          const responseCopy = response.clone();
+
+          caches.open(CACHE_NAME).then(cache => {
+            cache.put(event.request, responseCopy);
+          });
+
+          return response;
+        })
+        .catch(() => caches.match('./index.html'))
+    );
+
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       return cachedResponse || fetch(event.request);

@@ -159,18 +159,44 @@
         }
 
         function getWordOfTheDay(data) {
+            if (!Array.isArray(data) || data.length === 0) {
+                return null;
+            }
+
             const now = new Date();
-            // Create a unique number for the day (YYYYMMDD)
-            const dateSeed = now.getFullYear() * 10000 + (now.getMonth() + 1) * 100 + now.getDate();
-            
-            // Use the seed to pick a consistent index
-            const index = dateSeed % data.length;
+
+            // user's local date.
+            const dateString = [
+                now.getFullYear(),
+                String(now.getMonth() + 1).padStart(2, '0'),
+                String(now.getDate()).padStart(2, '0')
+            ].join('-');
+
+            // well-distributed integer from the date.
+            let hash = 2166136261;
+
+            for (let i = 0; i < dateString.length; i++) {
+                hash ^= dateString.charCodeAt(i);
+                hash = Math.imul(hash, 16777619);
+            }
+
+            const index = (hash >>> 0) % data.length;
+
             return data[index];
         }
 
         function displayWordOfTheDay(data) {
             const wod = getWordOfTheDay(data);
             const container = document.getElementById('wordOfDayContainer');
+
+            if (!wod) {
+                container.innerHTML = `
+                <p class="text-center text-red-500">
+                    Neno la leo halikuweza kupatikana.
+                </p>
+                `;
+                return;
+            }
             
             // We use the same formatting as our search results
             container.innerHTML = `
